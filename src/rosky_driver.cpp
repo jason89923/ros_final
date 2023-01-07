@@ -29,18 +29,15 @@ class Coord {
         init = true;
         this->x = odom.pose.pose.position.x;
         this->y = odom.pose.pose.position.y;
-        //z = RotationAxis.z * sin(RotationAngle / 2)
-        //this->orientation = int(2/sin(odom.pose.pose.orientation.z)*(180/M_PI));  //odom.pose.pose.orientation.z*(3.14159/180)+0.5
-
-          // 建立一個四元數
         tf2::Quaternion quat(odom.pose.pose.orientation.x, odom.pose.pose.orientation.y, odom.pose.pose.orientation.z, odom.pose.pose.orientation.w);
-
-        // 將四元數轉換為欧拉角
         double roll, pitch, yaw;
         tf2::Matrix3x3(quat).getRPY(roll, pitch, yaw);
 
         // std::cout << "roll: " << roll << " pitch: " << pitch << " yaw: " << yaw << std::endl;
         this->orientation = yaw * 180 / M_PI;
+        if (this->orientation < 0) {
+            this->orientation += 360;
+        }
         // cout << "orientation: " << this->orientation << std::endl;
     }
 
