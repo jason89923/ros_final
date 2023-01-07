@@ -4,10 +4,9 @@
 #include <ros/ros.h>
 #include <ros_final/driving_control.h>
 #include <std_msgs/String.h>
-#include <unistd.h>
-
-#include <tf2/LinearMath/Quaternion.h>
 #include <tf2/LinearMath/Matrix3x3.h>
+#include <tf2/LinearMath/Quaternion.h>
+#include <unistd.h>
 
 #include <iostream>
 
@@ -50,7 +49,7 @@ class Coord {
     double angleRight(const Coord& other) {
         double angle = other.orientation - this->orientation;
         cout << "angle --> " << this->orientation << "  , other --> " << other.orientation << endl;
-        //cout << "angle --> " << angle << endl;
+        // cout << "angle --> " << angle << endl;
         return angle >= 0 ? angle : 360 + angle;
     }
 
@@ -74,12 +73,15 @@ class Driver {
 
     Coord coord_first;
 
+    string mode;
+
     double velocity, distance, angle;
 
    public:
     Driver() {
         sub = node_handle->subscribe<nav_msgs::Odometry>("odom_rf2o", 1, &Driver::callback, this);
         pub = node_handle->advertise<geometry_msgs::Twist>("cmd_vel", 1);
+        mode = "relative";
     }
 
     void forward(const Coord& current) {
@@ -96,11 +98,31 @@ class Driver {
 
     void rotate(const Coord& current) {
         geometry_msgs::Twist twist;
-        if (coord_first.angleRight(current) < angle) {
-            twist.angular.z = velocity;
+        if (mode == 'absolute') {
+            int max = angle >= 355 ? angle - 355 : angle + 5;
+            int min = angle <= 5 ? angle + 355 : angle - 5;
+            if (max > min) {
+                if (current.orientation > min && current.orientation < max) {
+                    coord_first.init = false;
+                    current_state = ProcessState::IDLE;
+                } else {
+                    twist.angular.z = velocity;
+                }
+            } else {
+                if (current.orientation > min || current.orientation < max) {
+                    coord_first.init = false;
+                    current_state = ProcessState::IDLE;
+                } else {
+                    twist.angular.z = velocity;
+                }
+            }
         } else {
-            coord_first.init = false;
-            current_state = ProcessState::IDLE;
+            if (coord_first.angleRight(current) < angle) {
+                twist.angular.z = velocity;
+            } else {
+                coord_first.init = false;
+                current_state = ProcessState::IDLE;
+            }
         }
 
         pub.publish(twist);
@@ -143,6 +165,7 @@ class Controller {
         driver.velocity = request.velocity;
         driver.distance = request.distance_meter;
         driver.angle = request.angle_degree;
+        driver.mode = request.mode;
         if (request.angle_degree != 0) {
             driver.current_state = ProcessState::ROTATING;
         } else {

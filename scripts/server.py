@@ -6,7 +6,7 @@ import rospy
 from std_msgs.msg import String
 from ros_final.srv import *
 
-HOST = '192.168.1.224'
+HOST = '127.0.0.1'
 PORT = 7000
 
 s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
@@ -17,11 +17,11 @@ print('server start at: %s:%s' % (HOST, PORT))
 print('wait for connection...')
 state = ''
 
-def Ros_driver_client():
+def Ros_driver_client(degree: int):
     rospy.wait_for_service('rosky_control')
     try:
         client = rospy.ServiceProxy('rosky_control', driving_control)
-        request = driving_controlRequest(angle_degree=170, velocity=0.17)
+        request = driving_controlRequest(angle_degree=degree, velocity=0.17, mode='absolute')
         resp1 = client(request)
     except rospy.ServiceException as e:
         print("Service call failed: %s"%e)
@@ -33,16 +33,13 @@ while True:
     print('connected by ' + str(addr))
 
     while True:
-        indata = conn.recv(1024)
-        if len(indata) == 0: # connection closed
+        message = conn.recv(1024)
+        if len(message) == 0: # connection closed
             conn.close()
             print('client closed connection.')
             break
-        print('recv: ' + indata.decode())
-        if state != indata.decode() :
-            state = indata.decode()
-            Ros_driver_client()
-
-        #return_info = 'spin complete'
-        #return_info = 'echo: ' + return_info.decode()
-        #conn.send(return_info.encode())
+        if message.decode() == 'STOP':
+            Ros_driver_client(0)
+        else:
+            Ros_driver_client(180)
+        conn.send('ok'.encode())
