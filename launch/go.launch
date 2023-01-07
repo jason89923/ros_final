@@ -1,6 +1,4 @@
 <launch>
-  <remap from="/cmd_vel" to="/rosky/cmd_vel"/>
+  <remap from="/cmd_vel" to="/rosky01/cmd_vel"/>
   <node pkg="ros_final" type="rosky_driver" name="rosky_driver_node" output="screen"/>
-  <param name="velocity" value="0.1"/> 
-  <param name="distance" value="2.5"/> 
 </launch>

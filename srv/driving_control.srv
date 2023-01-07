@@ -1,0 +1,7 @@
+float32 distance_meter
+int32 angle_degree
+float32 velocity
+
+---
+ 
+string response_msg

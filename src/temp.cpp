@@ -3,11 +3,10 @@
 #include <nav_msgs/Odometry.h>
 #include <ros/ros.h>
 #include <ros_final/driving_control.h>
+#include <tf2/LinearMath/Quaternion.h>
 #include <std_msgs/String.h>
 #include <unistd.h>
 
-#include <tf2/LinearMath/Quaternion.h>
-#include <tf2/LinearMath/Matrix3x3.h>
 
 #include <iostream>
 
@@ -29,19 +28,9 @@ class Coord {
         init = true;
         this->x = odom.pose.pose.position.x;
         this->y = odom.pose.pose.position.y;
-        //z = RotationAxis.z * sin(RotationAngle / 2)
-        //this->orientation = int(2/sin(odom.pose.pose.orientation.z)*(180/M_PI));  //odom.pose.pose.orientation.z*(3.14159/180)+0.5
-
-          // 建立一個四元數
-        tf2::Quaternion quat(odom.pose.pose.orientation.x, odom.pose.pose.orientation.y, odom.pose.pose.orientation.z, odom.pose.pose.orientation.w);
-
-        // 將四元數轉換為欧拉角
-        double roll, pitch, yaw;
-        tf2::Matrix3x3(quat).getRPY(roll, pitch, yaw);
-
-        // std::cout << "roll: " << roll << " pitch: " << pitch << " yaw: " << yaw << std::endl;
-        this->orientation = yaw * 180 / M_PI;
-        // cout << "orientation: " << this->orientation << std::endl;
+        tf::
+        tf::TransformListener listener_;
+        this->orientation = int(4/cos(odom.pose.pose.orientation.w)*(180/M_PI));  //odom.pose.pose.orientation.z*(3.14159/180)+0.5
     }
 
     double distance(const Coord& other) {
@@ -51,14 +40,13 @@ class Coord {
     }
 
     double angleRight(const Coord& other) {
-        double angle = other.orientation - this->orientation;
-        cout << "angle --> " << this->orientation << "  , other --> " << other.orientation << endl;
+        double angle = this->orientation - other.orientation;
         //cout << "angle --> " << angle << endl;
         return angle >= 0 ? angle : 360 + angle;
     }
 
     double angle(const Coord& other) {
-        double angle = this->orientation - other.orientation;
+        double angle = other.orientation - this->orientation;
         return angle > 0 ? angle : -angle;
     }
 };
@@ -87,6 +75,7 @@ class Driver {
 
     void forward(const Coord& current) {
         geometry_msgs::Twist twist;
+        twist.linear.x = 0;
         if (coord_first.distance(current) < distance) {
             twist.linear.x = velocity;
         } else {
@@ -99,7 +88,8 @@ class Driver {
 
     void rotate(const Coord& current) {
         geometry_msgs::Twist twist;
-        if (coord_first.angleRight(current) < angle) {
+        twist.linear.x = 0;
+        if (coord_first.angleRight(current) < 180) {
             twist.angular.z = velocity;
         } else {
             coord_first.init = false;
@@ -110,6 +100,7 @@ class Driver {
     }
 
     void callback(const nav_msgs::Odometry::ConstPtr& odom) {
+        odom->twist.twist.
         Coord current = *odom;
         if (current_state == ProcessState::IDLE) {
             return;

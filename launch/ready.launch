@@ -36,4 +36,8 @@
         <param name="freq" value="6.0"/>                            # Execution frequency.
         <param name="verbose" value="true" />                       # verbose
       </node>
+
+      
+    <remap from="/cmd_vel" to="/rosky01/cmd_vel"/>
+    <node pkg="ros_final" type="rosky_driver" name="rosky_driver_node" output="screen"/>
 </launch>
