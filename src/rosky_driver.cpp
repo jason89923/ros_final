@@ -49,8 +49,15 @@ class Coord {
     double angleRight(const Coord& other) {
         double angle = other.orientation - this->orientation;
         cout << "angle --> " << this->orientation << "  , other --> " << other.orientation << endl;
+        if (angle < 0) {
+            angle += 360;
+        } 
+        
+        if (angle > 340) {
+            angle = 0;
+        }
         // cout << "angle --> " << angle << endl;
-        return angle >= 0 ? angle : 360 + angle;
+        return angle;
     }
 
     double angle(const Coord& other) {
@@ -98,7 +105,7 @@ class Driver {
 
     void rotate(const Coord& current) {
         geometry_msgs::Twist twist;
-        if (mode == 'absolute') {
+        if (mode == "absolute") {
             int max = angle >= 355 ? angle - 355 : angle + 5;
             int min = angle <= 5 ? angle + 355 : angle - 5;
             if (max > min) {
@@ -117,7 +124,7 @@ class Driver {
                 }
             }
         } else {
-            if (coord_first.angleRight(current) < angle) {
+            if (coord_first.angleRight(current) <= angle) {
                 twist.angular.z = velocity;
             } else {
                 coord_first.init = false;
